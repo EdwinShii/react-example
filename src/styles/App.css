@@ -30,6 +30,38 @@ body {
   overflow: hidden;
   background-color: #ddd;
 }
+
+.img-figure{
+  width: 290px;
+  height: 320px;
+  margin: 0px;
+  padding: 30px 30px 60px 30px;
+
+  box-sizing: border-box;
+
+  background-color: #fff;
+
+  position: absolute;
+}
+
+.img-figure img{
+  height: 100%;
+  width: 100%;
+}
+
+
+
+figcaption{
+  text-align: center;
+}
+
+.img-title{
+  margin: 20px,0,0,0;
+  color: #a7a0a2;
+  font-size: 16px;
+}
+
+
 /*image --- end */
 
 
@@ -43,3 +75,4 @@ body {
   text-align: center;
  }
 /*controller e*/
+
