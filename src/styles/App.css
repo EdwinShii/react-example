@@ -29,6 +29,9 @@ body {
   height: 100%;
   overflow: hidden;
   background-color: #ddd;
+
+  /*视觉景深*/
+  -webkit-perspective: 1600px;
 }
 
 .img-figure{
@@ -40,9 +43,21 @@ body {
   box-sizing: border-box;
 
   background-color: #fff;
-
   position: absolute;
+  cursor: pointer;
+
+  /*添加子元素旋转所需：*/
+  transform-style: preserve-3d;
+  /*origin 设置变换过程原点， 默认为50% 50%*/
+  transform-origin: 0 50% 0;
+  transition: left .6s ease-in-out, top .6s ease-in-out, transform .6s ease-in-out;
 }
+
+.is-inverse{
+  transform: rotateY(180deg) translate(-290px);
+
+}
+
 
 .img-figure img{
   height: 100%;
@@ -50,7 +65,7 @@ body {
 }
 
 
-
+/*figcaption -- start*/
 figcaption{
   text-align: center;
 }
@@ -60,6 +75,26 @@ figcaption{
   color: #a7a0a2;
   font-size: 16px;
 }
+
+.img-back{
+  position: absolute;
+  left: 0;
+  top: 0;
+
+  width: 100%;
+  height: 100%;
+  padding: 40px 30px;
+  box-sizing: border-box;
+  overflow: auto;
+  text-align: center;
+  color: #666;
+  background-color: #fff;
+
+  /*旋转180° 并且下移1px 保证不遮挡现有页面*/
+  transform: rotateY(180deg) translateZ(1px);
+}
+
+/*figcaption -- end*/
 
 
 /*image --- end */

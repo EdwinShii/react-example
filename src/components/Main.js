@@ -24,7 +24,7 @@ function getRangeRandom(low,high){
 }
 // 限制旋转角度：
 function get30degreeRandom(){
-	Math.ceil(Math.random()*30);
+	return ((Math.random()>0.5? "":"-") + Math.ceil(Math.random()*30));
 }
 
 
@@ -47,6 +47,23 @@ var StageOutter = React.createClass({
 			x:[0,0],
 			topY:[0,0]
 		}
+	},
+
+
+
+	/*
+	 * 翻转
+	 * index 决定哪个图为翻转
+	 * return{Function} 返回一闭包函数,其内包含一个真正待被执行的函数
+	*/
+	inverse:function(index){
+		return function(){
+			var imgsArrangeArr = this.state.imgsArrangeArr;
+			imgsArrangeArr[index].isInverse = !imgsArrangeArr[index].isInverse;
+			this.setState({
+				imgsArrangeArr:imgsArrangeArr 
+			});
+		}.bind(this);
 	},
 
 
@@ -77,16 +94,22 @@ var StageOutter = React.createClass({
 
 			imgsArrangeCenterArr[0].pos = centerPos;
 			imgsArrangeCenterArr[0].rotate = 0;
+			imgsArrangeCenterArr[0].isCenter = true;
 			// 取出要布局的上册的图片的状态信息
 			topImgSpliceIndex = Math.ceil(Math.random()*(imgsArrangeArr.length - topImgNum));
 			imgsArrangeTopArr =imgsArrangeArr.splice(topImgSpliceIndex,topImgNum);
 
 			// 布局上方的图片
 			imgsArrangeTopArr.forEach(function(value,index){
-				imgsArrangeTopArr[index].pos = {
-					top:getRangeRandom(vPosRangeTopY[0],vPosRangeTopY[1]),
-					left:getRangeRandom(vPosRangeX[0],vPosRangeX[1])
-				}
+
+				imgsArrangeTopArr[index] = {
+					pos:{
+						top:getRangeRandom(vPosRangeTopY[0],vPosRangeTopY[1]),
+						left:getRangeRandom(vPosRangeX[0],vPosRangeX[1])
+					},
+					rotate:get30degreeRandom(),
+					isCenter:false
+				};
 			});
 
 			// 布局左右的图片
@@ -98,10 +121,15 @@ var StageOutter = React.createClass({
 					hPosRangeLORX = hPosRangeRightSecX;
 				}
 
-				imgsArrangeArr[i].pos = {
-					top:getRangeRandom(hPosRangeY[0],hPosRangeY[1]),
-					left:getRangeRandom(hPosRangeLORX[0],hPosRangeLORX[1])
-				}
+				imgsArrangeArr[i] = {
+					pos : {
+						top:getRangeRandom(hPosRangeY[0],hPosRangeY[1]),
+						left:getRangeRandom(hPosRangeLORX[0],hPosRangeLORX[1])
+					},
+					rotate:get30degreeRandom(),
+					isCenter:false
+				};
+				
 			}
 
 
@@ -119,6 +147,18 @@ var StageOutter = React.createClass({
 
 
 
+	/*
+	 * 利用rearrange函数重新选定中心
+	 * centerIndex 决定哪个图为中心
+	*/
+	center:function(centerIndex){
+		return function(){
+			this.rearrage(centerIndex);
+		}.bind(this);
+	},
+
+
+
 
 
 	getInitialState: function(){
@@ -129,7 +169,9 @@ var StageOutter = React.createClass({
 				// 		left:"0",
 				// 		top:"0"
 				// 	},
-				// 	rotate: 0
+				// 	rotate: 0,
+				// 	isInverse: false, //false 为正面,true 为反面
+				// 	isCenter: false
 				// }
 			]
 		};
@@ -183,6 +225,7 @@ var StageOutter = React.createClass({
 		var imgFigures = [];
 
 		photos.forEach(function(value,index ){
+
 			index --;
 			if (!this.state.imgsArrangeArr[index]) {
 				this.state.imgsArrangeArr[index] = {
@@ -190,11 +233,17 @@ var StageOutter = React.createClass({
 						left:0,
 						top:0
 					},
-					rotate:0
+					rotate:0,
+					isInverse:false,
+					isCenter:false
 				}
 			}
 
-			imgFigures.push(<ImgFigure data = {value} ref ={"imgFigure"+index} arrange = {this.state.imgsArrangeArr[index]}/>);
+			imgFigures.push(<ImgFigure data = {value} ref ={"imgFigure"+index} 
+				arrange = {this.state.imgsArrangeArr[index]} 
+				inverse = {this.inverse(index)}
+				center = {this.center(index)}
+				/>);
 		}.bind(this));
 
 		return(
@@ -213,6 +262,19 @@ var StageOutter = React.createClass({
 
 // 组件：单个照片
 var ImgFigure = React.createClass({
+
+	handleClick:function(event){
+		if (this.props.arrange.isCenter) {
+			this.props.inverse();
+		}else{
+			this.props.center();
+		}
+		
+
+		event.stopPropagation();
+		event.preventDefault();
+	},
+
 	render:function(){
 
 		var styleObj = {};
@@ -220,16 +282,37 @@ var ImgFigure = React.createClass({
 		// 若props中指定了图片位置，则使用所指定的位置。
 		if(this.props.arrange.pos){
 			styleObj = this.props.arrange.pos;
-
+			
 		}
 
+		// 若props中指定了图片旋转角度，则使用。
+		if(this.props.arrange.rotate){
+
+			(['-moz-','-ms-','-webkit-','']).forEach(function(value){
+				styleObj[value +'transform'] = "rotate("+ this.props.arrange.rotate+"deg)";
+			}.bind(this));
+		}
+
+		if (this.props.arrange.isCenter) {
+			styleObj.zIndex = 11;
+		}
+
+		var imgFigureClassName = "img-figure";
+		imgFigureClassName += this.props.arrange.isInverse ? ' is-inverse': "";
+
+
 		return (
-			<figure className = "img-figure" style = {styleObj}>
+			<figure className = {imgFigureClassName} style = {styleObj} onClick = {this.handleClick}>
 				<img src = {this.props.data.imgUrl}
 					 alt = {this.props.data.title}
 				/>
 				<figcaption>
 					<h2 className = "img-title">{this.props.data.title}</h2>
+					<div className = "img-back" onClick = {this.handleClick}>
+						<p>
+							{this.props.data.desc}
+						</p>
+					</div>
 				</figcaption>
 			</figure>
 			);
